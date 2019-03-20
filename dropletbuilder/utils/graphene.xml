@@ -1,0 +1,8 @@
+<ForceField>
+ <AtomTypes>
+  <Type name="graphene_001" class="" element="C" mass="1.008" def="C" desc="generic C"/>
+ </AtomTypes>
+ <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+  <Atom type="graphene_001" charge="0" sigma="0.339967" epsilon="0.359824"/>
+ </NonbondedForce>
+</ForceField>
