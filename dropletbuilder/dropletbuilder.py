@@ -1,8 +1,8 @@
+import os
 import mbuild as mb
 import numpy as np
 from foyer import Forcefield 
-from ilforcefields.utils.utils import get_il
-from ilforcefields.utils.utils import get_ff
+from pkg_resources import resource_filename
 
 """
 dropletbuilder.py
@@ -10,6 +10,21 @@ Droplet on graphene builder
 
 Handles the primary functions
 """
+
+def get_fn(name):
+    """
+    Get the full path to one of the reference files shipped for utils.
+
+    Parameters
+    ----------
+    name : str
+        Name of the file to load (with respect to the utils/ folder).
+
+    """
+    fn = resource_filename('dropletbuilder', os.path.join('utils', name))
+    if not os.path.exists(fn):
+        raise IOError('{} does not exist.'.format(fn))
+    return fn
 
 def get_height(r, theta):
     """
@@ -37,17 +52,13 @@ class GrapheneDroplet(mb.Compound):
     def __init__(self, radius=5, angle=90.0):
         super(GrapheneDroplet, self).__init__()
 
-        cat = get_il('emim')
-        an = get_il('tf2n')
-        cmpnds = [cat, an, cat, an]
-        n_cmpnds = [150, 150, 150, 150]
-
-        graphene = mb.load('./utils/graphene_sheet.pdb')
+        water = mb.load(get_fn('tip3p.mol2'))
+        graphene = mb.load(get_fn('graphene_sheet.pdb'))
         coords = list(graphene.periodicity)
 
         height = get_height(radius, angle)
-        sheet_height = 0.682
-        sphere = mb.fill_sphere(compound=cmpnds, sphere=[coords[0], coords[1], radius, radius], n_compounds=n_cmpnds)
+        self.surface_height = np.max(graphene.xyz, axis=0)[2]
+        sphere = mb.fill_sphere(compound=[water], sphere=[coords[0], coords[1], radius, radius], n_compounds=[2000])
 
         to_remove = []
         for child in sphere.children:
@@ -63,8 +74,9 @@ class GrapheneDroplet(mb.Compound):
 
         sphere.remove(to_remove)
 
+        sphere.name = 'H2O'
         sphere.xyz -= [0, 0, np.min(sphere.xyz, axis=0)[2]]
-        sphere.xyz += [0, 0, sheet_height + 0.2]
+        sphere.xyz += [0, 0, self.surface_height + 0.3]
 
         sheet1 = mb.clone(graphene)
         sheet2 = mb.clone(graphene)
@@ -74,14 +86,16 @@ class GrapheneDroplet(mb.Compound):
         sheet3.translate([0,coords[1],0])
         sheet4.translate([coords[0],coords[1],0])
 
-        GRAPHENE = Forcefield('./utils/graphene.xml')
-        LOPES = get_ff('lopes')
+        sheet1.name = 'GPH'
+        sheet2.name = 'GPH'
+        sheet3.name = 'GPH'
+        sheet4.name = 'GPH'
 
-        system = GRAPHENE.apply(sheet1) + GRAPHENE.apply(sheet2) + GRAPHENE.apply(sheet3) + GRAPHENE.apply(sheet4)
-        system = system + LOPES.apply(sphere.to_parmed(residues=['emim', 'tf2n']))
-
-        system.box[0] = coords[0]*10*2
-        system.box[1] = coords[1]*10*2
-        system.box[2] = 200
-        system.save('droplet.gro', overwrite=True)
-        system.save('droplet.top', overwrite=True, combine='all')
+        self.add(sphere)
+        self.add(sheet1)
+        self.add(sheet2)
+        self.add(sheet3)
+        self.add(sheet4)
+        self.periodicity[0] = coords[0]*2
+        self.periodicity[1] = coords[1]*2
+        self.periodicity[2] = 20
