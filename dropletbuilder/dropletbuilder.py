@@ -1,8 +1,8 @@
 import os
+from pkg_resources import resource_filename
+
 import mbuild as mb
 import numpy as np
-from foyer import Forcefield
-from pkg_resources import resource_filename
 
 
 def get_fn(name):
