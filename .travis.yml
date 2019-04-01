@@ -34,18 +34,18 @@ before_install:
 install:
 
     # Create test environment for package
-  - python devtools/scripts/create_conda_env.py -n=test -p=$PYTHON_VER devtools/conda-envs/test_env.yaml
+  # - python devtools/scripts/create_conda_env.py -n=test -p=$PYTHON_VER devtools/conda-envs/test_env.yaml
+  - conda create -n test python=$PYTHON_VER --file requirements-dev.txt
     # Activate the test environment
   - conda activate test
+    # Install mbuild from source instead of conda for testing
+  - pip install git+https://github.com/mosdef-hub/mbuild.git
     # Build and install package
-  - python setup.py develop --no-deps
+  - pip install -e .
 
 
 script:
-  - pytest -v --cov=dropletbuilder dropletbuilder/tests/
+  - pytest -v dropletbuilder/tests/
 
 notifications:
     email: false
-
-after_success:
-  - codecov

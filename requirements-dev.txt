@@ -1,0 +1,6 @@
+numpy
+pytest
+oset
+mdtraj==1.9.1
+parmed
+packmol
