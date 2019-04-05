@@ -1,24 +1,5 @@
-import os
-from pkg_resources import resource_filename
-
 import mbuild as mb
 import numpy as np
-
-
-def get_fn(name):
-    """
-    Get the full path to one of the reference files shipped for utils.
-
-    Parameters
-    ----------
-    name : str
-        Name of the file to load (with respect to the utils/ folder).
-
-    """
-    fn = resource_filename('dropletbuilder', os.path.join('utils', name))
-    if not os.path.exists(fn):
-        raise IOError('{} does not exist.'.format(fn))
-    return fn
 
 
 def get_height(r, theta):
@@ -34,7 +15,7 @@ class GrapheneDroplet(mb.Compound):
 
     Parameters
     ----------
-    radius : int, default = 5
+    radius : int, default = 2
         radius of the droplet in nm
     angle : float, default = 90.0
         contact angle of the droplet in degrees
@@ -42,6 +23,11 @@ class GrapheneDroplet(mb.Compound):
         dimension of graphene sheet in x direction in nm
     y : float
         dimension of graphene sheet in y direction in nm
+    fluid : mbuild.Compound or list of mbuild.Compound
+        compounds to fill the droplet with
+    density: float or list of float
+        target density for the droplet in kg/m^3
+    NOTE: length of `fluid` must match length of `density`
 
     Attributes
     ----------
@@ -49,7 +35,9 @@ class GrapheneDroplet(mb.Compound):
 
     """
 
-    def __init__(self, radius=2, angle=90.0, x=None, y=None):
+    def __init__(self, radius=2, angle=90.0, x=None, y=None, fluid=None, 
+                density=None):
+                
         super(GrapheneDroplet, self).__init__()
 
         if x and y:
@@ -61,6 +49,11 @@ class GrapheneDroplet(mb.Compound):
                 x = radius * 4
             if not y:
                 y = radius * 4
+
+        if fluid is None:
+            raise ValueError('Fluid droplet compounds must be specified')
+        if density is None:
+            raise ValueError('Fluid density must be specified (units kg/m^3)')
 
         factor = np.cos(np.pi / 6)
         # Estimate the number of lattice repeat units
@@ -88,11 +81,10 @@ class GrapheneDroplet(mb.Compound):
         self.surface_height = np.max(sheet.xyz, axis=0)[2]
         coords = list(sheet.periodicity)
 
-        water = mb.load(get_fn('tip3p.mol2'))
         height = get_height(radius, angle)
         sphere_coords = [coords[0] / 2, coords[1] / 2, radius, radius]
         sphere = mb.fill_sphere(
-            compound=water, sphere=sphere_coords, density=997)
+            compound=fluid, sphere=sphere_coords, density=density)
 
         to_remove = []
         for child in sphere.children:
@@ -109,7 +101,7 @@ class GrapheneDroplet(mb.Compound):
         sphere.remove(to_remove)
 
         sheet.name = 'GPH'
-        sphere.name = 'H2O'
+        sphere.name = 'FLD'
         sphere.xyz -= [0, 0, np.min(sphere.xyz, axis=0)[2]]
         sphere.xyz += [0, 0, self.surface_height + 0.3]
 
