@@ -1,7 +1,7 @@
 import pytest
 import sys
 import numpy as np
-import mbuild as mb
+import mbuild
 
 from dropletbuilder.utils.io_tools import get_fn
 
@@ -14,13 +14,13 @@ class BaseTest:
     @pytest.fixture
     def GrapheneDroplet(self):
         from dropletbuilder.dropletbuilder import GrapheneDroplet
-        water = mb.load(get_fn('tip3p.mol2'))
+        water = mbuild.load(get_fn('tip3p.mol2'))
         return GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997)
 
     @pytest.fixture
     def GrapheneDropletWithDims(self):
         from dropletbuilder.dropletbuilder import GrapheneDroplet
-        water = mb.load(get_fn('tip3p.mol2'))
+        water = mbuild.load(get_fn('tip3p.mol2'))
         return GrapheneDroplet(radius=1, angle=90.0, x=4, y=4, fluid=water, density=997)
 
 

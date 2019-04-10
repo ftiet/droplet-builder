@@ -1,4 +1,4 @@
-import mbuild as mb
+import mbuild
 import numpy as np
 
 
@@ -9,7 +9,7 @@ def get_height(r, theta):
     return r - r * np.cos(theta * np.pi / 180)
 
 
-class GrapheneDroplet(mb.Compound):
+class GrapheneDroplet(mbuild.Compound):
     """
     Builds a droplet on a graphene sheet.
 
@@ -37,7 +37,7 @@ class GrapheneDroplet(mb.Compound):
 
     def __init__(self, radius=2, angle=90.0, x=None, y=None, fluid=None, 
                 density=None):
-                
+
         super(GrapheneDroplet, self).__init__()
 
         if x and y:
@@ -59,12 +59,12 @@ class GrapheneDroplet(mb.Compound):
         # Estimate the number of lattice repeat units
         replicate = [int(x / 0.2456), int(y / 0.2456) * (1 / factor)]
 
-        carbon = mb.Compound(name='C')
+        carbon = mbuild.Compound(name='C')
         lattice_spacing = [0.2456, 0.2456, 0.335]
         angles = [90.0, 90.0, 120.0]
         carbon_locations = [[0, 0, 0], [2 / 3, 1 / 3, 0]]
         basis = {carbon.name: carbon_locations}
-        graphene_lattice = mb.Lattice(
+        graphene_lattice = mbuild.Lattice(
             lattice_spacing=lattice_spacing,
             angles=angles,
             lattice_points=basis)
@@ -77,13 +77,13 @@ class GrapheneDroplet(mb.Compound):
                 particle.xyz[0][0] += graphene.periodicity[0]
         graphene.periodicity[1] *= factor
 
-        sheet = mb.clone(graphene)
+        sheet = mbuild.clone(graphene)
         self.surface_height = np.max(sheet.xyz, axis=0)[2]
         coords = list(sheet.periodicity)
 
         height = get_height(radius, angle)
         sphere_coords = [coords[0] / 2, coords[1] / 2, radius, radius]
-        sphere = mb.fill_sphere(
+        sphere = mbuild.fill_sphere(
             compound=fluid, sphere=sphere_coords, density=density)
 
         to_remove = []
