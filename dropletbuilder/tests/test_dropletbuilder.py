@@ -12,6 +12,19 @@ class BaseTest:
         tmpdir.chdir()
 
     @pytest.fixture
+    def GoldLattice(self):
+        lattice_compound = mbuild.Compound(name='Au')
+        lattice_spacing = [0.40788, 0.40788, 0.40788]
+        lattice_vector = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        gold_locations = [[0., 0., 0.], [.5, .5, 0.], [.5, 0., .5], [0, .5, .5]]
+        basis = {lattice_compound.name: gold_locations}
+        gold_lattice = mbuild.Lattice(
+            lattice_spacing=lattice_spacing,
+            lattice_vectors=lattice_vector,
+            lattice_points=basis)
+        return gold_lattice
+
+    @pytest.fixture
     def GrapheneDroplet(self):
         from dropletbuilder.dropletbuilder import GrapheneDroplet
         water = mbuild.load(get_fn('tip3p.mol2'))
@@ -34,40 +47,53 @@ class TestDropletBuilder(BaseTest):
         assert "dropletbuilder" in sys.modules
 
     def test_init_with_missing_fluid(self):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
         with pytest.raises(ValueError, match="Fluid droplet compounds"):
-            from dropletbuilder.dropletbuilder import GrapheneDroplet
             GrapheneDroplet(radius=1, angle=90.0, density=997)
     
     def test_init_with_missing_density(self):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
         with pytest.raises(ValueError, match="Fluid density"):
-            from dropletbuilder.dropletbuilder import GrapheneDroplet
-            water = mbuild.load(get_fn('tip3p.mol2'))
             GrapheneDroplet(radius=1, angle=90.0, fluid=water)
 
+    def test_init_without_lattice_with_lattice_compound(self):
+        lattice_compound = mbuild.Compound(name='Au')
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
+        with pytest.raises(ValueError, match="do not specify lattice_compound"):
+            GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997, x=4, y=4, lattice_compound=lattice_compound)
+
+    def test_init_with_lattice_without_lattice_compound(self, GoldLattice):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
+        with pytest.raises(ValueError, match="Lattice compounds"):
+            GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997, x=4, y=4, lattice=GoldLattice)
+
     def test_init_with_too_small_x(self):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
         with pytest.raises(ValueError, match="x .* at least"):
-            from dropletbuilder.dropletbuilder import GrapheneDroplet
-            water = mbuild.load(get_fn('tip3p.mol2'))
             GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997, x=1, y=4)
 
     def test_init_with_too_small_y(self):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
         with pytest.raises(ValueError, match="y .* at least"):
-            from dropletbuilder.dropletbuilder import GrapheneDroplet
-            water = mbuild.load(get_fn('tip3p.mol2'))
             GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997, x=4, y=1)
     
     def test_init_with_too_large_x(self):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
         with pytest.raises(ValueError, match="x .* 100"):
-            from dropletbuilder.dropletbuilder import GrapheneDroplet
-            water = mbuild.load(get_fn('tip3p.mol2'))
             GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997, x=101, y=4)
 
     def test_init_with_too_large_y(self):
+        from dropletbuilder.dropletbuilder import GrapheneDroplet
+        water = mbuild.load(get_fn('tip3p.mol2'))
         with pytest.raises(ValueError, match="y .* 100"):
-            from dropletbuilder.dropletbuilder import GrapheneDroplet
-            water = mbuild.load(get_fn('tip3p.mol2'))
             GrapheneDroplet(radius=1, angle=90.0, fluid=water, density=997, x=4, y=101)
-
+    
     def test_save(self, GrapheneDroplet):
         GrapheneDroplet.save('droplet.gro', overwrite=True, combine='all')
 
