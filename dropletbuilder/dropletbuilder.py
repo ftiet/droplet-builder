@@ -23,8 +23,10 @@ class GrapheneDroplet(mbuild.Compound):
         compounds to fill the droplet with
     density: float or list of float
         target density for the droplet in kg/m^3
-    lattice: mbuild.Compound
-        lattice compound to build droplet on
+    lattice: mbuild.Lattice
+        lattice to build droplet on
+    lattice_compound: mbuild.Compound
+        compound to build lattice with
     x : float
         dimension of graphene sheet in x direction in nm
     y : float
@@ -38,7 +40,7 @@ class GrapheneDroplet(mbuild.Compound):
     """
 
     def __init__(self, radius=2, angle=90.0, fluid=None, density=None,
-                lattice=None, x=None, y=None):
+                lattice=None, lattice_compound=None, x=None, y=None):
 
         super(GrapheneDroplet, self).__init__()
 
@@ -47,50 +49,80 @@ class GrapheneDroplet(mbuild.Compound):
         if density is None:
             raise ValueError('Fluid density must be specified (units kg/m^3)')
 
+        if x:
+            if x < radius * 4:
+                raise ValueError(
+                    'Dimension x of sheet must be at least radius * 4')
+            elif x > 100:
+                raise ValueError(
+                    'Dimension x of sheet must be less than 100 nm')
+        else:
+            x = radius * 4
+
+        if y:
+            if y < radius * 4:
+                raise ValueError(
+                    'Dimension y of sheet must be at least radius * 4')
+            elif y > 100:
+                raise ValueError(
+                    'Dimension y of sheet must be less than 100 nm')
+        else:
+            y = radius * 4
+
+        # Default to graphene lattice
         if lattice is None:
-            if x:
-                if x < radius * 4:
-                    raise ValueError(
-                        'Dimension x of sheet must be at least radius * 4')
-                elif x > 100:
-                    raise ValueError(
-                        'Dimension x of sheet must be less than 100 nm')
-            else:
-                x = radius * 4
 
-            if y:
-                if y < radius * 4:
-                    raise ValueError(
-                        'Dimension y of sheet must be at least radius * 4')
-                elif y > 100:
-                    raise ValueError(
-                        'Dimension y of sheet must be less than 100 nm')
-            else:
-                y = radius * 4
+            if lattice_compound is not None:
+                raise ValueError(
+                    'If Lattice is None, defaults to a Graphene surface. ' +
+                    'In this case, do not specify lattice_compound.'
+                )
 
-            factor = np.cos(np.pi / 6)
-            # Estimate the number of lattice repeat units
-            replicate = [int(x / 0.2456), int(y / 0.2456) * (1 / factor)]
-
-            carbon = mbuild.Compound(name='C')
+            lattice_compound = mbuild.Compound(name='C')
             lattice_spacing = [0.2456, 0.2456, 0.335]
             angles = [90.0, 90.0, 120.0]
             carbon_locations = [[0, 0, 0], [2 / 3, 1 / 3, 0]]
-            basis = {carbon.name: carbon_locations}
-            graphene_lattice = mbuild.Lattice(
+            basis = {lattice_compound.name: carbon_locations}
+            lattice = mbuild.Lattice(
                 lattice_spacing=lattice_spacing,
                 angles=angles,
                 lattice_points=basis)
-            carbon_dict = {carbon.name: carbon}
-            lattice = graphene_lattice.populate(
-                compound_dict=carbon_dict, x=replicate[0], y=replicate[1], z=3)
+            compound_dict = {lattice_compound.name: lattice_compound}
 
-            for particle in lattice.particles():
+            factor = np.cos(np.pi / 6) # fixes non-cubic lattice
+            # Estimate the number of lattice repeat units
+            replicate = [int(x / 0.2456), int(y / 0.2456) * (1 / factor)]
+
+            lat = lattice.populate(
+                compound_dict=compound_dict,
+                x=replicate[0],
+                y=replicate[1],
+                z=3
+            )
+
+            for particle in lat.particles():
                 if particle.xyz[0][0] < 0:
-                    particle.xyz[0][0] += lattice.periodicity[0]
-            lattice.periodicity[1] *= factor
+                    particle.xyz[0][0] += lat.periodicity[0]
+            lat.periodicity[1] *= factor
 
-        sheet = mbuild.clone(lattice)
+        else:
+            if lattice_compound is None:
+                raise ValueError('Lattice compounds must be specified')
+
+            if not np.all(lattice.angles == 90.0):
+                raise ValueError(
+                    'Currently, only cubic lattices are supported. ' +
+                    'If using Graphene, do not pass in a Lattice.'
+                )
+
+            compound_dict = {lattice_compound.name: lattice_compound}
+            lat = lattice.populate(
+                compound_dict=compound_dict,
+                x=int(x/lattice.lattice_spacing[0]),
+                y=int(y/lattice.lattice_spacing[1]),
+                z=int(1.5/lattice.lattice_spacing[2]))
+
+        sheet = mbuild.clone(lat)
         self.surface_height = np.max(sheet.xyz, axis=0)[2]
         coords = list(sheet.periodicity)
 
