@@ -1,6 +1,7 @@
 from dropletbuilder.dropletbuilder import GrapheneDroplet
 import mbuild
 from mbuild.examples.alkane.alkane import Alkane 
+from dropletbuilder.utils.io_tools import get_fn
 from foyer import Forcefield
 
 # build the lattice
@@ -22,7 +23,7 @@ system = GrapheneDroplet(radius=3, angle=90, fluid=hexane, density=655,
             lattice=gold_lattice, lattice_compound=lattice_compound)
 
 # get and apply forcefields
-AU = Forcefield('files/heinz2008.xml')
+AU = Forcefield(get_fn('heinz2008.xml'))
 OPLSAA = Forcefield(name='oplsaa')
 
 for child in system.children:
