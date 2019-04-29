@@ -4,4 +4,4 @@ Droplet on graphene builder
 """
 
 # Add imports here
-from dropletbuilder.dropletbuilder import GrapheneDroplet
+from dropletbuilder.dropletbuilder import Droplet
