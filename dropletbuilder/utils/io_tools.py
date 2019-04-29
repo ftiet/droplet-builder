@@ -10,7 +10,8 @@ def get_fn(name):
     name : str
         Name of the file to load (with respect to the utils/ folder).
     """
-    fn = resource_filename('dropletbuilder', os.path.join('utils/files', name))
+    fn = resource_filename('dropletbuilder', os.path.join('utils', name))
+    print(fn)
     if not os.path.exists(fn):
         raise IOError('{} does not exist.'.format(fn))
     return fn
