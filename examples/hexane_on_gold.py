@@ -1,4 +1,4 @@
-from dropletbuilder.dropletbuilder import GrapheneDroplet
+from dropletbuilder.dropletbuilder import Droplet
 import mbuild
 from mbuild.examples.alkane.alkane import Alkane 
 from dropletbuilder.utils.io_tools import get_fn
@@ -17,9 +17,10 @@ gold_lattice = mbuild.Lattice(
 
 # hexane compound
 hexane = Alkane(n=6)
+hexane.name = 'HEX'
 
 # build the system
-system = GrapheneDroplet(radius=3, angle=90, fluid=hexane, density=655,
+system = Droplet(radius=3, angle=90, fluid=hexane, density=655,
             lattice=gold_lattice, lattice_compound=lattice_compound)
 
 # get and apply forcefields
@@ -28,9 +29,9 @@ OPLSAA = Forcefield(name='oplsaa')
 
 for child in system.children:
     if child.name == 'LAT':
-        lattice_pmd = AU.apply(child.to_parmed(residues='LAT'))
+        lattice_pmd = AU.apply(child.to_parmed(residues='Au'))
     elif child.name == 'FLD':
-        hex_pmd = OPLSAA.apply(child.to_parmed(residues='FLD'))
+        hex_pmd = OPLSAA.apply(child.to_parmed(residues='HEX'))
     else:
         continue
 
