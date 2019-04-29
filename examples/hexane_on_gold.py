@@ -17,6 +17,7 @@ gold_lattice = mbuild.Lattice(
 
 # hexane compound
 hexane = Alkane(n=6)
+hexane.name = 'HEX'
 
 # build the system
 system = GrapheneDroplet(radius=3, angle=90, fluid=hexane, density=655,
@@ -28,9 +29,9 @@ OPLSAA = Forcefield(name='oplsaa')
 
 for child in system.children:
     if child.name == 'LAT':
-        lattice_pmd = AU.apply(child.to_parmed(residues='LAT'))
+        lattice_pmd = AU.apply(child.to_parmed(residues='HEX'))
     elif child.name == 'FLD':
-        hex_pmd = OPLSAA.apply(child.to_parmed(residues='FLD'))
+        hex_pmd = OPLSAA.apply(child.to_parmed(residues='Au'))
     else:
         continue
 
