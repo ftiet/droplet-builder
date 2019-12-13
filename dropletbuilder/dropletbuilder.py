@@ -9,9 +9,9 @@ def get_height(r, theta):
     return r - r * np.cos(theta * np.pi / 180)
 
 
-class GrapheneDroplet(mbuild.Compound):
+class Droplet(mbuild.Compound):
     """
-    Builds a droplet on a graphene sheet.
+    Builds a droplet on a lattice.
 
     Parameters
     ----------
@@ -42,7 +42,7 @@ class GrapheneDroplet(mbuild.Compound):
     def __init__(self, radius=2, angle=90.0, fluid=None, density=None,
                 lattice=None, lattice_compound=None, x=None, y=None):
 
-        super(GrapheneDroplet, self).__init__()
+        super(Droplet, self).__init__()
 
         if fluid is None:
             raise ValueError('Fluid droplet compounds must be specified')
